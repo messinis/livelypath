@@ -64,7 +64,7 @@ def get_best_route(gmaps, origin, destination):
             rating = place.get("rating", 0)
 
             # Calculate a score based on distance from the direct route and rating
-            distance_weight = 3  # Adjust this value to find the best balance between distance and rating
+            distance_weight = 10  # Adjust this value to find the best balance between distance and rating
             score = (1 / (1 + distance_from_route)) ** distance_weight * rating
             waypoints_per_type.append((waypoint, score))
 
