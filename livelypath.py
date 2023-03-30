@@ -11,7 +11,7 @@ API_KEY = os.environ.get("API_KEY")
 gmaps = googlemaps.Client(key=API_KEY)
 
 st.set_page_config(layout="wide", page_title="Busy Path Finder")
-st.title("Busy Path Finder")
+st.title("Lively Path")
 
 def get_best_route(gmaps, origin, destination):
     busy_places_types = ['cafe', 'bar', 'restaurant']
