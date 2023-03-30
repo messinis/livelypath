@@ -36,7 +36,7 @@ def point_to_line_distance(point, line_start, line_end):
 
 def get_best_route(gmaps, origin, destination):
     busy_places_types = ['cafe', 'bar', 'restaurant']
-    busy_places_radius = 200  # Adjust the radius as needed
+    busy_places_radius = 300  # Increase the radius to cover a larger area
 
     waypoints = []
 
@@ -56,7 +56,8 @@ def get_best_route(gmaps, origin, destination):
             rating = place.get("rating", 0)
 
             # Calculate a score based on distance from the direct route and rating
-            score = 1 / (1 + distance_from_route) * rating
+            distance_weight = 2  # Adjust this value to find the best balance between distance and rating
+            score = (1 / (1 + distance_from_route)) ** distance_weight * rating
             waypoints.append((waypoint, score))
 
     # Sort waypoints by score (in descending order) and keep the top 23
@@ -83,6 +84,7 @@ def get_best_route(gmaps, origin, destination):
 
     # Return the list of coordinates making up the best route
     return best_route
+
 
 
 
