@@ -46,7 +46,11 @@ def get_best_route(gmaps, origin, destination):
             lat = place['geometry']['location']['lat']
             lng = place['geometry']['location']['lng']
             waypoint = f"{lat},{lng}"
-            waypoints.append(waypoint)
+            waypoints.append((waypoint, place.get("rating", 0)))  # Add rating to the waypoints tuple
+
+    # Sort waypoints by rating (in descending order) and keep the top 23
+    waypoints.sort(key=lambda x: x[1], reverse=True)
+    waypoints = [wp[0] for wp in waypoints[:23]]
 
     directions = gmaps.directions(
         origin=origin,
@@ -65,9 +69,10 @@ def get_best_route(gmaps, origin, destination):
             if segment_length > 100:  # Only include segments longer than 100m
                 best_route.append(start)
             best_route.append(end)
-    
+
     # Return the list of coordinates making up the best route
     return best_route
+
 
 # Input origin and destination
 with st.form("inputs"):
