@@ -28,6 +28,11 @@ def get_answer_from_chatgpt(prompt):
     answer = response.choices[0].text.strip()
     return answer
 
+def point_to_line_distance(point, line_start, line_end):
+    numerator = abs((line_end[1] - line_start[1]) * point[0] - (line_end[0] - line_start[0]) * point[1] + line_end[0] * line_start[1] - line_end[1] * line_start[0])
+    denominator = geopy.distance.distance(line_start, line_end).m
+    return numerator / denominator
+
 
 def get_best_route(gmaps, origin, destination):
     busy_places_types = ['cafe', 'bar', 'restaurant']
@@ -45,12 +50,18 @@ def get_best_route(gmaps, origin, destination):
         for place in busy_places['results']:
             lat = place['geometry']['location']['lat']
             lng = place['geometry']['location']['lng']
-            waypoint = f"{lat},{lng}"
-            waypoints.append((waypoint, place.get("rating", 0)))  # Add rating to the waypoints tuple
+            waypoint = (lat, lng)
 
-    # Sort waypoints by rating (in descending order) and keep the top 23
+            distance_from_route = point_to_line_distance(waypoint, (origin['lat'], origin['lng']), (destination['lat'], destination['lng']))
+            rating = place.get("rating", 0)
+
+            # Calculate a score based on distance from the direct route and rating
+            score = 1 / (1 + distance_from_route) * rating
+            waypoints.append((waypoint, score))
+
+    # Sort waypoints by score (in descending order) and keep the top 23
     waypoints.sort(key=lambda x: x[1], reverse=True)
-    waypoints = [wp[0] for wp in waypoints[:23]]
+    waypoints = [f"{wp[0][0]},{wp[0][1]}" for wp in waypoints[:23]]
 
     directions = gmaps.directions(
         origin=origin,
@@ -72,6 +83,7 @@ def get_best_route(gmaps, origin, destination):
 
     # Return the list of coordinates making up the best route
     return best_route
+
 
 
 # Input origin and destination
