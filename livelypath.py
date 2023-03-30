@@ -38,8 +38,9 @@ def get_best_route(gmaps, origin, destination):
         mode="walking",
         waypoints=waypoints,
     )
-
-    return directions
+    
+ # Return the first route in the list of directions
+    return directions[0]
 
 
 # Input origin and destination
