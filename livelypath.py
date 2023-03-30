@@ -33,6 +33,21 @@ def point_to_line_distance(point, line_start, line_end):
     denominator = geopy.distance.distance(line_start, line_end).m
     return numerator / denominator
 
+import math
+
+def angle_between_steps(step1, step2):
+    dy1 = step1['end_location']['lat'] - step1['start_location']['lat']
+    dx1 = step1['end_location']['lng'] - step1['start_location']['lng']
+    dy2 = step2['end_location']['lat'] - step2['start_location']['lat']
+    dx2 = step2['end_location']['lng'] - step2['start_location']['lng']
+
+    angle = math.atan2(dy2, dx2) - math.atan2(dy1, dx1)
+    angle = math.degrees(angle)
+
+    # Normalize the angle to the range [0, 360)
+    angle = (angle + 360) % 360
+    return angle
+
 
 def get_best_route(gmaps, origin, destination):
     busy_places_types = ['cafe', 'bar', 'restaurant']
@@ -64,7 +79,7 @@ def get_best_route(gmaps, origin, destination):
             rating = place.get("rating", 0)
 
             # Calculate a score based on distance from the direct route and rating
-            distance_weight = 0.1  # Adjust this value to find the best balance between distance and rating
+            distance_weight = 3  # Adjust this value to find the best balance between distance and rating
             score = (1 / (1 + distance_from_route)) ** distance_weight * rating
             waypoints_per_type.append((waypoint, score))
 
@@ -84,15 +99,22 @@ def get_best_route(gmaps, origin, destination):
         optimize_waypoints=True,
     )
 
+    legs_steps = [step for leg in directions[0]['legs'] for step in leg['steps']]
+
     best_route = []
-    for leg in directions[0]['legs']:
-        for step in leg['steps']:
-            start = (step['start_location']['lat'], step['start_location']['lng'])
-            end = (step['end_location']['lat'], step['end_location']['lng'])
-            segment_length = geopy.distance.distance(start, end).m
-            if segment_length > 100:  # Only include segments longer than 100m
-                best_route.append(start)
-            best_route.append(end)
+    for i in range(len(legs_steps) - 1):
+        step = legs_steps[i]
+        next_step = legs_steps[i + 1]
+
+        angle = angle_between_steps(step, next_step)
+        if 160 < angle < 200:  # Skip the step if it forms a back-and-forth movement
+            continue
+
+        start = (step['start_location']['lat'], step['start_location']['lng'])
+        end = (step['end_location']['lat'], step['end_location']['lng'])
+        best_route.append(start)
+        best_route.append(end)
+
 
     # Return the list of coordinates making up the best route
     return best_route
@@ -118,6 +140,10 @@ if submitted:
 
             # Display the map with the best route
             m = folium.Map(location=[origin_coords["lat"], origin_coords["lng"]], zoom_start=14)
+
+            # Add markers for origin and destination
+            folium.Marker([origin_coords["lat"], origin_coords["lng"]], popup="Origin", icon=folium.Icon(color='green')).add_to(m)
+            folium.Marker([destination_coords["lat"], destination_coords["lng"]], popup="Destination", icon=folium.Icon(color='red')).add_to(m)
 
             for i in range(len(best_route_coords)-1):
                 start = best_route_coords[i]
