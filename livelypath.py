@@ -38,7 +38,7 @@ def get_best_route(gmaps, origin, destination):
         mode="walking",
         waypoints=waypoints,
     )
-    
+
  # Return the first route in the list of directions
     return directions[0]
 
@@ -60,6 +60,9 @@ if submitted:
             destination_coords = destination_geocode[0]['geometry']['location']
 
             best_route = get_best_route(gmaps, origin_coords, destination_coords)
+            print(best_route)
+            map_data = polyline.decode(best_route["overview_polyline"]["points"])
+            print(map_data)
 
             # Display the map with the best route
             map_data = polyline.decode(best_route["overview_polyline"]["points"])
