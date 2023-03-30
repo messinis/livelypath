@@ -109,30 +109,23 @@ def get_best_route(gmaps, origin, destination):
         optimize_waypoints=True,
     )
 
-    best_route = []
     legs_steps = [step for leg in directions[0]['legs'] for step in leg['steps']]
-    total_distance = sum([geopy.distance.distance((step['start_location']['lat'], step['start_location']['lng']),
-                                                (step['end_location']['lat'], step['end_location']['lng'])).m
-                        for step in legs_steps])
 
-    for i in range(len(legs_steps)):
+    best_route = []
+    tolerance_angle = 20
+    for i in range(len(legs_steps) - 1):
         step = legs_steps[i]
-        start = (step['start_location']['lat'], step['start_location']['lng'])
-        end = (step['end_location']['lat'], step['end_location']['lng'])
+        next_step = legs_steps[i + 1]
 
-        # Calculate the cumulative distance of the step along the route
-        cum_distance = cumulative_distance(legs_steps, i)
-
-        # Calculate the straight-line distance between the origin and the end location of the step
-        straight_distance_to_end = geopy.distance.distance((origin['lat'], origin['lng']), end).m
-
-        # Skip the step if the cumulative distance is much greater than the straight-line distance to the end location
-        if cum_distance > 1.5 * straight_distance_to_end and cum_distance < 0.9 * total_distance:
+        angle = angle_between_steps(step, next_step)
+        if (180 - tolerance_angle) < angle < (180 + tolerance_angle):  # Skip the step if it forms a back-and-forth movement
             continue
 
+        start = (step['start_location']['lat'], step['start_location']['lng'])
+        end = (step['end_location']['lat'], step['end_location']['lng'])
         best_route.append(start)
         best_route.append(end)
-
+        
 
     # Return the list of coordinates making up the best route
     return best_route
