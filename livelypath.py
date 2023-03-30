@@ -4,14 +4,30 @@ import polyline
 import folium
 from streamlit_folium import folium_static
 import geopy.distance
-
+import openai
 import os
 
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
+openai.api_key = OPENAI_API_KEY
 API_KEY = os.environ.get("API_KEY")
 gmaps = googlemaps.Client(key=API_KEY)
 
-st.set_page_config(layout="wide", page_title="Busy Path Finder")
+st.set_page_config(layout="wide", page_title="Lively Path")
 st.title("Lively Path")
+
+def get_answer_from_chatgpt(prompt):
+    response = openai.Completion.create(
+        engine="text-davinci-002",
+        prompt=prompt,
+        max_tokens=50,
+        n=1,
+        stop=None,
+        temperature=0.7,
+    )
+
+    answer = response.choices[0].text.strip()
+    return answer
+
 
 def get_best_route(gmaps, origin, destination):
     busy_places_types = ['cafe', 'bar', 'restaurant']
@@ -80,7 +96,15 @@ if submitted:
                 folium.PolyLine([start, end], color="blue", weight=2.5, opacity=1).add_to(m)
                 
             folium_static(m)
+
+            # Get and display the sightseeing attraction near the destination address
+            destination_address = destination_geocode[0]['formatted_address']
+            question = f"What is one historical sightseeing attraction, near {destination_address}? Answer only with the name of the attraction and a one-sentence description."
+            attraction_info = get_answer_from_chatgpt(question)
+            st.markdown(f"**Sightseeing Attraction Near Point B:** {attraction_info}")
+
         else:
             st.error("Invalid addresses entered. Please try again.")
     else:
         st.error("Please enter both origin and destination addresses.")
+
