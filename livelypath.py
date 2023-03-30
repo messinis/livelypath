@@ -68,7 +68,7 @@ def get_best_route(gmaps, origin, destination):
 
     # Sort waypoints by score (in descending order) and keep the top 23
     waypoints.sort(key=lambda x: x[1], reverse=True)
-    waypoints = [f"{wp[0][0]},{wp[0][1]}" for wp in waypoints[:23]]
+    waypoints = [f"{wp[0][0]},{wp[0][1]}" for wp in waypoints[:10]]
 
     directions = gmaps.directions(
         origin=origin,
@@ -84,7 +84,7 @@ def get_best_route(gmaps, origin, destination):
             start = (step['start_location']['lat'], step['start_location']['lng'])
             end = (step['end_location']['lat'], step['end_location']['lng'])
             segment_length = geopy.distance.distance(start, end).m
-            if segment_length > 300:  # Only include segments longer than 100m
+            if segment_length > 100:  # Only include segments longer than 100m
                 best_route.append(start)
             best_route.append(end)
 
@@ -94,8 +94,8 @@ def get_best_route(gmaps, origin, destination):
 
 # Input origin and destination
 with st.form("inputs"):
-    origin = st.text_input("Origin Address (Point A)")
-    destination = st.text_input("Destination Address (Point B)")
+    origin = st.text_input("Origin Address")
+    destination = st.text_input("Destination Address")
     submitted = st.form_submit_button("Find Best Route")
 
 if submitted:
