@@ -57,50 +57,7 @@ def cumulative_distance(steps, index):
         distance += geopy.distance.distance(start, end).m
     return distance
 
-
-
-def get_best_route(gmaps, origin, destination):
-    busy_places_types = ['cafe', 'bar', 'restaurant']
-    busy_places_radius = 500  # Increase the radius to cover a larger area
-
-    waypoints = []
-
-    # Calculate the straight-line distance between origin and destination
-    straight_distance = geopy.distance.distance((origin['lat'], origin['lng']), (destination['lat'], destination['lng'])).m
-
-    # Determine the number of waypoints based on the desired interval (e.g., one waypoint every 100 meters)
-    waypoint_interval = 100
-    num_waypoints = min(int(straight_distance / waypoint_interval), 23)
-
-    for place_type in busy_places_types:
-        busy_places = gmaps.places_nearby(
-            location=origin,
-            radius=busy_places_radius,
-            type=place_type,
-        )
-
-        waypoints_per_type = []
-        for place in busy_places['results']:
-            lat = place['geometry']['location']['lat']
-            lng = place['geometry']['location']['lng']
-            waypoint = (lat, lng)
-
-            distance_from_route = point_to_line_distance(waypoint, (origin['lat'], origin['lng']), (destination['lat'], destination['lng']))
-            rating = place.get("rating", 0)
-
-            # Calculate a score based on distance from the direct route and rating
-            distance_weight = 3  # Adjust this value to find the best balance between distance and rating
-            score = (1 / (1 + distance_from_route)) ** distance_weight * rating
-            waypoints_per_type.append((waypoint, score))
-
-        # Sort waypoints by score (in descending order) and keep the top waypoints for each place type
-        waypoints_per_type.sort(key=lambda x: x[1], reverse=True)
-        waypoints.extend(waypoints_per_type[:num_waypoints])
-
-    # Sort waypoints by score (in descending order) and keep the top num_waypoints
-    waypoints.sort(key=lambda x: x[1], reverse=True)
-    waypoints = [f"{wp[0][0]},{wp[0][1]}" for wp in waypoints[:num_waypoints]]
-
+def route_distance(gmaps, origin, destination, waypoints):
     directions = gmaps.directions(
         origin=origin,
         destination=destination,
@@ -109,25 +66,64 @@ def get_best_route(gmaps, origin, destination):
         optimize_waypoints=True,
     )
 
-    legs_steps = [step for leg in directions[0]['legs'] for step in leg['steps']]
+    total_distance = 0
+    for leg in directions[0]['legs']:
+        total_distance += leg['distance']['value']
+
+    return total_distance
+
+
+def get_best_route(gmaps, origin, destination):
+    busy_places_types = ['cafe', 'bar', 'restaurant']
+    busy_places_radius = 200  # Adjust the radius as needed
+
+    waypoints = []
+
+    for place_type in busy_places_types:
+        busy_places = gmaps.places_nearby(
+            location=origin,
+            radius=busy_places_radius,
+            type=place_type,
+        )
+
+        for place in busy_places['results']:
+            lat = place['geometry']['location']['lat']
+            lng = place['geometry']['location']['lng']
+            waypoint = f"{lat},{lng}"
+            waypoints.append(waypoint)
+
+    # Calculate the total distance of the route without waypoints
+    direct_distance = route_distance(gmaps, origin, destination, [])
+
+    # Filter waypoints based on the distance they add to the route
+    filtered_waypoints = []
+    distance_factor = 1.5  # Adjust this factor to control the distance a waypoint can add to the route
+
+    for waypoint in waypoints:
+        new_route_distance = route_distance(gmaps, origin, destination, filtered_waypoints + [waypoint])
+        if new_route_distance <= distance_factor * direct_distance:
+            filtered_waypoints.append(waypoint)
+
+    # Limit the number of waypoints to 23 to avoid the API's limit
+    filtered_waypoints = filtered_waypoints[:23]
+
+    # Get the directions with the filtered waypoints
+    directions = gmaps.directions(
+        origin=origin,
+        destination=destination,
+        mode="walking",
+        waypoints=filtered_waypoints,
+        optimize_waypoints=True,
+    )
 
     best_route = []
-    tolerance_angle = 90
-    for i in range(len(legs_steps) - 1):
-        step = legs_steps[i]
-        next_step = legs_steps[i + 1]
+    for leg in directions[0]['legs']:
+        for step in leg['steps']:
+            start = (step['start_location']['lat'], step['start_location']['lng'])
+            end = (step['end_location']['lat'], step['end_location']['lng'])
+            best_route.append(start)
+            best_route.append(end)
 
-        angle = angle_between_steps(step, next_step)
-        if (180 - tolerance_angle) < angle < (180 + tolerance_angle):  # Skip the step if it forms a back-and-forth movement
-            continue
-
-        start = (step['start_location']['lat'], step['start_location']['lng'])
-        end = (step['end_location']['lat'], step['end_location']['lng'])
-        best_route.append(start)
-        best_route.append(end)
-
-
-    # Return the list of coordinates making up the best route
     return best_route
 
 
