@@ -112,7 +112,7 @@ def get_best_route(gmaps, origin, destination):
     legs_steps = [step for leg in directions[0]['legs'] for step in leg['steps']]
 
     best_route = []
-    tolerance_angle = 40
+    tolerance_angle = 1
     for i in range(len(legs_steps) - 1):
         step = legs_steps[i]
         next_step = legs_steps[i + 1]
