@@ -13,7 +13,65 @@ gmaps = googlemaps.Client(key=API_KEY)
 st.set_page_config(layout="wide", page_title="Busy Path Finder")
 st.title("Busy Path Finder")
 
+
 def get_best_route(gmaps, origin, destination):
+    busy_places_types = ['cafe', 'bar', 'restaurant']
+    busy_places_radius = 200  # Adjust the radius as needed
+
+    # Get the route between the origin and destination
+    directions = gmaps.directions(
+        origin=origin,
+        destination=destination,
+        mode="walking",
+    )
+
+    # Extract the polyline representing the route
+    route_polyline = directions[0]["overview_polyline"]["points"]
+    route_points = polyline.decode(route_polyline)
+
+    # Select waypoints based on nearby busy places
+    waypoints = []
+    for i in range(len(route_points) - 1):
+        segment_start = route_points[i]
+        segment_end = route_points[i + 1]
+        segment_length = geopy.distance.distance(segment_start, segment_end).m
+
+        for place_type in busy_places_types:
+            busy_places = gmaps.places_nearby(
+                location=segment_start,
+                radius=min(busy_places_radius, segment_length),
+                type=place_type,
+            )
+
+            if not busy_places["results"]:
+                continue
+
+            # Select the closest place along the segment
+            closest_place = min(
+                busy_places["results"],
+                key=lambda place: geopy.distance.distance(
+                    (place["geometry"]["location"]["lat"], place["geometry"]["location"]["lng"]),
+                    segment_start,
+                ).m,
+            )
+
+            lat = closest_place["geometry"]["location"]["lat"]
+            lng = closest_place["geometry"]["location"]["lng"]
+            waypoint = f"{lat},{lng}"
+            waypoints.append(waypoint)
+
+    # Get the best route with the selected waypoints
+    best_route = gmaps.directions(
+        origin=origin,
+        destination=destination,
+        mode="walking",
+        waypoints=waypoints,
+    )[0]
+
+    return best_route
+
+
+# def get_best_route(gmaps, origin, destination):
     busy_places_types = ['cafe', 'bar', 'restaurant']
     busy_places_radius = 200  # Adjust the radius as needed
 
