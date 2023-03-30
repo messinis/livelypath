@@ -36,7 +36,8 @@ def point_to_line_distance(point, line_start, line_end):
 
 def get_best_route(gmaps, origin, destination):
     busy_places_types = ['cafe', 'bar', 'restaurant']
-    busy_places_radius = 300  # Increase the radius to cover a larger area
+    busy_places_radius = 500  # Increase the radius to cover a larger area
+    max_waypoints_per_type = 8  # Limit the number of waypoints per place type
 
     waypoints = []
 
@@ -47,6 +48,7 @@ def get_best_route(gmaps, origin, destination):
             type=place_type,
         )
 
+        waypoints_per_type = []
         for place in busy_places['results']:
             lat = place['geometry']['location']['lat']
             lng = place['geometry']['location']['lng']
@@ -56,9 +58,13 @@ def get_best_route(gmaps, origin, destination):
             rating = place.get("rating", 0)
 
             # Calculate a score based on distance from the direct route and rating
-            distance_weight = 2  # Adjust this value to find the best balance between distance and rating
+            distance_weight = 3  # Adjust this value to find the best balance between distance and rating
             score = (1 / (1 + distance_from_route)) ** distance_weight * rating
-            waypoints.append((waypoint, score))
+            waypoints_per_type.append((waypoint, score))
+        
+        # Sort waypoints by score (in descending order) and keep the top waypoints for each place type
+        waypoints_per_type.sort(key=lambda x: x[1], reverse=True)
+        waypoints.extend(waypoints_per_type[:max_waypoints_per_type])
 
     # Sort waypoints by score (in descending order) and keep the top 23
     waypoints.sort(key=lambda x: x[1], reverse=True)
@@ -84,8 +90,6 @@ def get_best_route(gmaps, origin, destination):
 
     # Return the list of coordinates making up the best route
     return best_route
-
-
 
 
 # Input origin and destination
