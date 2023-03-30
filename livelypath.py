@@ -5,8 +5,9 @@ import polyline
 import folium
 from streamlit_folium import folium_static
 
-# Replace 'YOUR_API_KEY' with your actual Google Maps API key
-API_KEY = 'AIzaSyDINLZWmBoD9zq4Bnl_lIEBfjDf53FoS6U'
+import os
+API_KEY = os.environ.get("API_KEY")
+
 gmaps = googlemaps.Client(key=API_KEY)
 
 st.set_page_config(layout="wide", page_title="Busy Path Finder")
