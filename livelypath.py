@@ -13,25 +13,34 @@ gmaps = googlemaps.Client(key=API_KEY)
 st.set_page_config(layout="wide", page_title="Busy Path Finder")
 st.title("Busy Path Finder")
 
-def get_best_route(origin, destination, api_key):
-    places_types = ['cafe', 'bar', 'restaurant']
-    places_ranking = "prominence"
+def get_best_route(gmaps, origin, destination):
+    busy_places_types = ['cafe', 'bar', 'restaurant']
+    busy_places_radius = 200  # Adjust the radius as needed
+
     waypoints = []
 
-    for place_type in places_types:
-        result = requests.get(f'https://maps.googleapis.com/maps/api/place/nearbysearch/json?location={origin["lat"]},{origin["lng"]}&radius=1000&type={place_type}&rankby={places_ranking}&key={api_key}').json()
+    for place_type in busy_places_types:
+        busy_places = gmaps.places_nearby(
+            location=origin,
+            radius=busy_places_radius,
+            type=place_type,
+        )
 
-        if result.get('results'):
-            waypoints.append(result['results'][0]['geometry']['location'])
+        for place in busy_places['results']:
+            lat = place['geometry']['location']['lat']
+            lng = place['geometry']['location']['lng']
+            waypoint = f"{lat},{lng}"
+            waypoints.append(waypoint)
 
-    waypoints_str = [f'{wp["lat"]},{wp["lng"]}' for wp in waypoints]
-    directions_result = gmaps.directions(origin=f'{origin["lat"]},{origin["lng"]}',
-                                         destination=f'{destination["lat"]},{destination["lng"]}',
-                                         mode="walking",
-                                         waypoints=waypoints_str,
-                                         optimize_waypoints=True)
+    directions = gmaps.directions(
+        origin=origin,
+        destination=destination,
+        mode="walking",
+        waypoints=waypoints,
+    )
 
-    return directions_result[0]
+    return directions
+
 
 # Input origin and destination
 with st.form("inputs"):
