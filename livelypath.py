@@ -58,7 +58,7 @@ if submitted:
             origin_coords = origin_geocode[0]['geometry']['location']
             destination_coords = destination_geocode[0]['geometry']['location']
 
-            best_route = get_best_route(origin_coords, destination_coords, API_KEY)
+            best_route = get_best_route(gmaps, origin_coords, destination_coords)
 
             # Display the map with the best route
             map_data = polyline.decode(best_route["overview_polyline"]["points"])
