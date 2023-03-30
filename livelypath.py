@@ -37,9 +37,15 @@ def point_to_line_distance(point, line_start, line_end):
 def get_best_route(gmaps, origin, destination):
     busy_places_types = ['cafe', 'bar', 'restaurant']
     busy_places_radius = 500  # Increase the radius to cover a larger area
-    max_waypoints_per_type = 8  # Limit the number of waypoints per place type
 
     waypoints = []
+
+    # Calculate the straight-line distance between origin and destination
+    straight_distance = geopy.distance.distance((origin['lat'], origin['lng']), (destination['lat'], destination['lng'])).m
+
+    # Determine the number of waypoints based on the desired interval (e.g., one waypoint every 100 meters)
+    waypoint_interval = 100
+    num_waypoints = min(int(straight_distance / waypoint_interval), 23)
 
     for place_type in busy_places_types:
         busy_places = gmaps.places_nearby(
@@ -61,14 +67,14 @@ def get_best_route(gmaps, origin, destination):
             distance_weight = 3  # Adjust this value to find the best balance between distance and rating
             score = (1 / (1 + distance_from_route)) ** distance_weight * rating
             waypoints_per_type.append((waypoint, score))
-        
+
         # Sort waypoints by score (in descending order) and keep the top waypoints for each place type
         waypoints_per_type.sort(key=lambda x: x[1], reverse=True)
-        waypoints.extend(waypoints_per_type[:max_waypoints_per_type])
+        waypoints.extend(waypoints_per_type[:num_waypoints])
 
-    # Sort waypoints by score (in descending order) and keep the top 23
+    # Sort waypoints by score (in descending order) and keep the top num_waypoints
     waypoints.sort(key=lambda x: x[1], reverse=True)
-    waypoints = [f"{wp[0][0]},{wp[0][1]}" for wp in waypoints[:10]]
+    waypoints = [f"{wp[0][0]},{wp[0][1]}" for wp in waypoints[:num_waypoints]]
 
     directions = gmaps.directions(
         origin=origin,
