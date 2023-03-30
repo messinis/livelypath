@@ -97,7 +97,7 @@ def get_best_route(gmaps, origin, destination):
 
     # Filter waypoints based on the distance they add to the route
     filtered_waypoints = []
-    distance_factor = 1.3  # Adjust this factor to control the distance a waypoint can add to the route
+    distance_factor = 1  # Adjust this factor to control the distance a waypoint can add to the route
 
     for waypoint in waypoints:
         new_route_distance = route_distance(gmaps, origin, destination, filtered_waypoints + [waypoint])
@@ -161,9 +161,9 @@ if submitted:
 
             # Get and display the sightseeing attraction near the destination address
             destination_address = destination_geocode[0]['formatted_address']
-            question = f"What is one attraction of cultural value, near {destination_address}? Answer only with its name and a two-sentence description. It should be as nearby as possible"
+            question = f"What is one attraction of cultural value, near {destination_address}? Answer only with its name and an one sentence description."
             attraction_info = get_answer_from_chatgpt(question)
-            st.markdown(f"**Sightseeing Attraction Near Destination:** {attraction_info}")
+            st.markdown(f"**Attraction of Cultural Value Near Destination:** {attraction_info}")
 
         else:
             st.error("Invalid addresses entered. Please try again.")
