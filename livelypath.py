@@ -84,7 +84,7 @@ def get_best_route(gmaps, origin, destination):
             start = (step['start_location']['lat'], step['start_location']['lng'])
             end = (step['end_location']['lat'], step['end_location']['lng'])
             segment_length = geopy.distance.distance(start, end).m
-            if segment_length > 100:  # Only include segments longer than 100m
+            if segment_length > 200:  # Only include segments longer than 100m
                 best_route.append(start)
             best_route.append(end)
 
