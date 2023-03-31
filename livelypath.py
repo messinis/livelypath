@@ -97,7 +97,7 @@ def get_best_route(gmaps, origin, destination):
 
     # Filter waypoints based on the distance they add to the route
     filtered_waypoints = []
-    distance_factor = 1.4  # Adjust this factor to control the distance a waypoint can add to the route
+    distance_factor = 1.3  # Adjust this factor to control the distance a waypoint can add to the route
 
     for waypoint in waypoints:
         new_route_distance = route_distance(gmaps, origin, destination, filtered_waypoints + [waypoint])
