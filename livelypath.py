@@ -75,7 +75,7 @@ def route_distance(gmaps, origin, destination, waypoints):
 
 def get_best_route(gmaps, origin, destination):
     busy_places_types = ['cafe', 'bar', 'restaurant']
-    busy_places_radius = 200  # Adjust the radius as needed
+    busy_places_radius = 300  # Adjust the radius as needed
 
     waypoints = []
 
